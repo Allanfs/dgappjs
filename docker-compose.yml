@@ -1,0 +1,26 @@
+version: "3"
+
+services:
+  node:
+     image: node
+     entrypoint: "bash"
+     working_dir: /usr/src/app
+     volumes: 
+       - "~/Documentos/projetos/git/dom-gilittus/backjs:/usr/src/app"
+     ports:
+       - "8081:8080"
+       
+  # db:
+  #   build: ./
+  #   image: myimg
+  #   environment:
+  #     - "POSTGRES_PASSWORD=123"
+  #   ports:
+  #     - "5432:5432"
+#  admin:
+#     image: dpage/pgadmin4
+#     environment:
+#        - PGADMIN_DEFAULT_EMAIL=user@domain.com
+#        - PGADMIN_DEFAULT_PASSWORD=SuperSecret
+#     ports:
+#        - 80:80

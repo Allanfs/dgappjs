@@ -1,3 +1,6 @@
+# arquivos de configuração
+/config
+
 # Logs
 logs
 *.log
