@@ -2,14 +2,14 @@ version: "3"
 
 services:
   node:
-     image: node
-     entrypoint: "bash"
-     working_dir: /usr/src/app
-     volumes: 
-       - "~/Documentos/projetos/git/dom-gilittus/backjs:/usr/src/app"
-     ports:
-       - "8081:8080"
-       
+    image: node
+    entrypoint: "npm run dev"
+    working_dir: /usr/src/app
+    volumes: 
+      - "~/Documentos/projetos/git/dom-gilittus/backjs:/usr/src/app"
+    ports:
+      - "8081:8080"
+      
   # db:
   #   build: ./
   #   image: myimg

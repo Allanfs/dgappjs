@@ -1,0 +1,64 @@
+POST http://localhost:8080/clientes
+Content-Type: application/json
+
+{
+  "ddd": 123,
+  "nome": "Givvaldo",
+  "cpf": "10336540",
+  "email": "aslk",
+  "telefone": {
+    "ddd": 83,
+    "numero": 996185444,
+    "whatsapp": true,
+    "observacao": null
+  },
+  "endereco":{
+    "rua": "Rua dos palmares",
+    "numero": "51",
+    "complemento": "apt 102",
+    "bairro": "Bancarios"
+  }
+}
+
+###
+
+DELETE http://localhost:8081/clientes
+
+###
+GET http://localhost:8081/clientes
+
+###
+GET http://localhost:8080/pedidos
+###
+POST http://localhost:8081/pedidos
+Content-Type: application/json
+
+{
+  "cliente": {
+    "id_cliente": 46
+  },
+  "itens": [
+    {
+      "quantidade": 1,
+      "pizza":true,
+      "sabores": [
+        {
+          "id_sabor": 1
+        }
+      ],
+      "tamanho": {
+        "id_tamanho": 1
+      },
+      "produto": {
+        "id_produto":1
+      }
+    }
+  ],
+  "forma_pagamento": 1,
+  "valor_pago": 1,
+  "total":1
+}
+
+###
+
+PATCH http://localhost:8081/pedidos/9
