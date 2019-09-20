@@ -43,20 +43,31 @@ Content-Type: application/json
       "pizza":true,
       "sabores": [
         {
-          "id_sabor": 1
+          "id_sabor": 10
+        },
+        {
+          "id_sabor": 12
         }
       ],
       "tamanho": {
-        "id_tamanho": 1
+        "id_tamanho":2,
+        "numero_max_sabores":2
       },
       "produto": {
         "id_produto":1
       }
+    },
+    {
+      "produto": {
+        "id_produto":2
+      },
+      "quantidade": 2,
+      "pizza": false
     }
   ],
   "forma_pagamento": 1,
-  "valor_pago": 1,
-  "total":1
+  "valor_desconto": 2,
+  "valor_pago": 1
 }
 
 ###
