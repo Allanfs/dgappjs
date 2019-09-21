@@ -1,6 +1,7 @@
 const SqlGenerator = require('sql-generator');
 const sqlgen = new SqlGenerator();
 
+const tb = `dg.tb_pedido`;
 module.exports = function(db) {
   return {
     async calcularValorItemPedido({ tamanho, sabores, produto, quantidade }) {
@@ -184,6 +185,17 @@ module.exports = function(db) {
       return this.buscarPedidoCompletoPorID(idPedido);
     },
 
+    async buscarPedidoPorID(id) {
+      const sqlBuscarPorID = sqlgen.select(tb, '*', { id_pedido: id });
+      return await db
+        .query(sqlBuscarPorID.sql, sqlBuscarPorID.values)
+        .then(({ rows }) => rows[0])
+        .catch((e) => {
+          console.error(`falha ao encontrar pedido. ${e}`);
+          throw 'falha ao encontrar pedido';
+        });
+    },
+
     async buscarPedidoCompletoPorID(id) {
       const stmt = sqlgen.select('dg.tb_pedido', '*', { id_pedido: id });
 
@@ -227,6 +239,62 @@ module.exports = function(db) {
           console.error(`falha ao realizar consulta dos preços. Erro: ${e}`);
           return null;
         });
+    },
+
+    async fecharPedido(idPedido) {
+      if (isNaN(idPedido) || idPedido <= 0) {
+        throw 'ID NaN';
+      }
+
+      let pedido;
+      try {
+        pedido = await this.buscarPedidoPorID(idPedido);
+      } catch (error) {
+        throw 500;
+      }
+
+      // verifica se as informações de pagamento do pedido
+      if (!pedido || pedido === {}) {
+        throw 404;
+      } else if (!pedido.valor_pago) {
+        throw 'valor de pagamento não informado';
+      } else if (pedido.valor_pago < pedido.subtotal - pedido.valor_desconto) {
+        throw 'valor pago inferior ao valor do pedido';
+      }
+
+      // obtem a hora atual
+      const data = new Date().toLocaleDateString('en-us', {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric'
+      });
+
+      // cria consulta de update para o pedido
+      const sqlFecharPedido = sqlgen.update(
+        tb,
+        { id_pedido: idPedido },
+        { id_estado: 2, hora_fechamento: data }
+      );
+
+      // realiza fechamento
+      const fechou = db
+        .query(sqlFecharPedido.sql, sqlFecharPedido.values)
+        .then((r) => {
+          return true;
+        })
+        .catch((e) => {
+          console.error(`falha ao fechar pedido. ${e}`);
+          return false;
+        });
+
+      if (!fechou) {
+        throw 'não foi possivel fechar pedido';
+      }
+
+      console.log('pedido fechado com sucesso');
     }
   };
 };

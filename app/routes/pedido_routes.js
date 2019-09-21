@@ -3,6 +3,7 @@ const pService = require('../service/pedido_service');
 const sqlgen = new SqlGenerator();
 
 module.exports = function(app, db) {
+  const tb = `dg.tb_pedido`;
   const pedidoService = pService(db);
 
   app.get('/pedidos', async (req, res) => {
@@ -25,28 +26,25 @@ module.exports = function(app, db) {
     const id = req.params.id;
 
     if (isNaN(id) || id <= 0) {
-      res.status(400);
-      res.send('ID inválido');
+      res.status(400).send('ID inválido');
       return;
     }
-
-    const consulta = qGetPedidos;
-    consulta += ` WHERE id_pedido = ${id}`;
-
-    const pedido = await db
-      .query(consulta)
-      .then((r) => r.rows[0])
+    pedidoService
+      .buscarPedidoPorID(id)
+      .then((pedido) => {
+        if (pedido) {
+          console.log('achei!');
+          res.status(200).send(pedido);
+        } else {
+          console.log('não achei esse pedido');
+          res.sendStatus(404);
+        }
+      })
       .catch((e) => {
-        console.error('falha na consulta', e);
-        return {};
+        console.log('erro ein', e);
+        res.status(500).send(e);
       });
 
-    if (pedido === null || pedido === {}) {
-      res.status(404).send('nenhum pedido encontrado');
-      return;
-    }
-
-    res.status(200).send(pedido);
     return;
   });
 
@@ -151,7 +149,6 @@ module.exports = function(app, db) {
     }
     console.log(`${qtdItens} itens informados`);
     pedido.subtotal = pedido.subtotal || 0;
-    console.log(`verificando itens do pedido...`);
     for (let i = 0; i < pedido.itens.length; i++) {
       const item = pedido.itens[i];
 
@@ -165,7 +162,6 @@ module.exports = function(app, db) {
         pedido.subtotal += valor * item.quantidade;
       });
     }
-    console.log(`ok`);
 
     // let subtotal = 0 // verifica se o valor de desconto é inferior ao valor do pedido
     // if(pedido.valor_desconto && !isNaN(pedido.valor_desconto)) {
@@ -206,41 +202,24 @@ module.exports = function(app, db) {
   app.patch('/pedidos/:id', async (req, res) => {
     const idPedido = req.params.id;
 
-    const data = new Date().toLocaleDateString('en-us', {
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      second: 'numeric'
-    });
-    const consulta = sqlgen.update(
-      'dg.tb_pedido',
-      { id_pedido: idPedido },
-      { id_estado: 2, hora_fechamento: data }
-    );
-
-    const fechou = db
-      .query(consulta.sql, consulta.values)
-      .then((r) => {
-        return true;
+    pedidoService
+      .fecharPedido(idPedido)
+      .then((_) => {
+        res.status(202).send('pedido fechado com sucesso');
       })
       .catch((e) => {
-        console.error(`falha ao fechar pedido. ${e}`);
-        return false;
+        if (!isNaN(e)) {
+          res.status(e).send();
+        } else {
+          res.status(200).send(e);
+        }
       });
 
-    if (!fechou) {
-      res.status(500).send('não foi possivel fechar pedido');
-      return;
-    }
-
-    res.status(202).send('pedido fechado com sucesso');
     return;
   });
 };
 
 const qGetPedidos = {
   name: 'get-pedidos',
-  text: sqlgen.select('db.tb_pedido', '*')
+  text: sqlgen.select(`dg.tb_pedido`, '*')
 };
