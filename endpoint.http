@@ -1,10 +1,11 @@
-POST http://localhost:8080/clientes
+
+POST http://localhost:8081/clientes
 Content-Type: application/json
 
 {
   "ddd": 123,
   "nome": "Givvaldo",
-  "cpf": "10336540",
+  "cpf": "01234567890",
   "email": "aslk",
   "telefone": {
     "ddd": 83,
@@ -22,13 +23,17 @@ Content-Type: application/json
 
 ###
 
-DELETE http://localhost:8081/clientes
+DELETE http://localhost:8081/clientes/49
 
 ###
 GET http://localhost:8081/clientes
+###
+GET http://localhost:8081/clientes/telefone/996185444
+###
+GET http://localhost:8081/clientes/cpf/01234567890
 
 ###
-GET http://localhost:8080/pedidos
+GET http://localhost:8081/pedidos/62
 ###
 POST http://localhost:8081/pedidos
 Content-Type: application/json
@@ -67,9 +72,15 @@ Content-Type: application/json
   ],
   "forma_pagamento": 1,
   "valor_desconto": 2,
-  "valor_pago": 1
+  "valor_pago": 50
 }
 
 ###
 
-PATCH http://localhost:8081/pedidos/9
+PATCH http://localhost:8081/pedidos/62
+
+###
+
+GET http://localhost:8081/sabores
+###
+GET http://localhost:8081/sabores/800
