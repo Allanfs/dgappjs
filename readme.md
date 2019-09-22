@@ -123,7 +123,6 @@ Retorno: 200 - ok
 ### Item Pedido
 
 ```
-{
   {
       "quantidade": int
       "pizza": bool
@@ -131,5 +130,4 @@ Retorno: 200 - ok
       "tamanho": tamanho
       "produto": produto
     }
-}
 ```

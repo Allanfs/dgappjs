@@ -4,6 +4,7 @@ const cors = require('cors');
 const db = require('./config/db');
 const bodyParser = require('body-parser');
 
+const logger = require('./config/logger');
 /* ----------------------------------------------------------------- */
 
 const app = express();
@@ -27,10 +28,10 @@ client
   .then(() => {
     require('./app/routes')(app, client);
     app.listen(port, () => {
-      console.log('Conectado com sucesso!');
+      logger.info('conectado com sucesso');
     });
   })
   .catch((e) => {
-    console.log(`Falha ao conectar com banco de dados!${e}`);
+    logger.error(`falha ao conectar com banco de dados!${e}`);
     client.end();
   });

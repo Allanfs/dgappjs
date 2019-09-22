@@ -1,5 +1,6 @@
 const SqlGenerator = require('sql-generator');
 const sqlgen = new SqlGenerator();
+const logger = require('../../config/logger');
 
 const tb = `dg.tb_cliente`;
 module.exports = function(db) {
@@ -55,29 +56,29 @@ module.exports = function(db) {
     },
 
     async buscarTelefoneDoCliente(id) {
-      const consulta = `SELECT * FROM db.tb_telefone WHERE id_cliente = $1`;
-      let retorne = db
+      const consulta = `SELECT * FROM dg.tb_telefone WHERE id_cliente = $1`;
+      let retorne = await db
         .query(consulta, [id])
         .then(({ rows }) => {
-          console.log(`encontrado [${id}]`);
+          logger.info(`encontrado telefone do cliente [${id}]`);
           return rows[0];
         })
         .catch((e) => {
-          console.error(`falha ao encontrar telefone [${id}] ${e}`);
+          logger.error(`falha ao encontrar telefone [${id}] ${e}`);
           return null;
         });
       return retorne;
     },
     async buscarEnderecoDoCliente(id) {
-      const consulta = `SELECT * FROM db.tb_endereco WHERE id_cliente = $1`;
-      let retorne = db
+      const consulta = `SELECT * FROM dg.tb_endereco WHERE id_cliente = $1`;
+      let retorne = await db
         .query(consulta, [id])
         .then(({ rows }) => {
-          console.log(`encontrado [${id}]`);
+          logger.info(`encontrado endereço para cliente [${id}]`);
           return rows[0];
         })
         .catch((e) => {
-          console.error(`falha ao encontrar endereço [${id}] ${e}`);
+          logger.error(`falha ao encontrar endereço [${id}] ${e}`);
           return null;
         });
       return retorne;

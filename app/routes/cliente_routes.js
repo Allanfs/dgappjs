@@ -1,4 +1,5 @@
 const SqlGenerator = require('sql-generator');
+const logger = require('../../config/logger');
 
 const sqlgen = new SqlGenerator();
 const clienteService = require('../service/cliente_sevice');
@@ -7,16 +8,15 @@ module.exports = function(app, db) {
   const cService = clienteService(db);
 
   app.get('/clientes', (req, res) => {
-    console.log('Consultando todos os clientes');
+    logger.info('Consultando todos os clientes');
     db.query(qGetClientes)
       .then((r) => {
-        console.log(r);
         res.status(200);
         res.type('application/json');
         res.send(r.rows);
       })
       .catch((e) => {
-        console.log('Deu erro! =(', e);
+        logger.error('Deu erro! =(', e);
         res.type('application/json');
         res.send(e);
       });
@@ -26,8 +26,7 @@ module.exports = function(app, db) {
     const id = req.params.id;
 
     if (isNaN(id) || id <= 0) {
-      res.status(400);
-      res.send('ID inválido');
+      res.status(400).send('ID inválido');
       return;
     }
 
@@ -39,11 +38,10 @@ module.exports = function(app, db) {
     await db
       .query(consulta)
       .then(({ rows }) => (cliente = rows[0]))
-      .catch((err) => console.error(err));
+      .catch((err) => logger.error(err));
 
     if (cliente === null || cliente === undefined) {
-      res.status(404);
-      res.send(null);
+      res.status(404).send(null);
     }
 
     res.send(cliente);
@@ -52,13 +50,14 @@ module.exports = function(app, db) {
 
   app.get('/clientes/telefone/:telefone([0-9]+)', async (req, res) => {
     let telefoneStr = req.params.telefone;
+    logger.info(`buscar cliente pelo numero de telefone [${telefoneStr}]`);
 
     switch (telefoneStr.length) {
-      case 8:
-        console.log('consultando um celular');
+      case 8: // 32356050
+        logger.info('consultando um telefone fixo');
         break;
-      case 9:
-        console.log('consultando um telefone fixo');
+      case 9: // 996185444
+        logger.info('consultando um celular');
         break;
 
       default:
@@ -66,47 +65,75 @@ module.exports = function(app, db) {
         return;
     }
 
-    cService
+    let clienteEncontrado;
+    await cService
       .buscarPorTelefone(telefoneStr)
       .then((cliente) => {
         if (cliente !== null) {
-          console.log(`encontrado cliente [${cliente.id_cliente}]`);
-          res.status(200).send(cliente);
+          logger.info(`encontrado cliente [${cliente.id_cliente}]`);
+          clienteEncontrado = cliente;
         } else {
-          console.log(`nenhum cliente encontrado`);
-          res.status(404).send(null);
+          logger.info(`nenhum cliente encontrado`);
+          clienteEncontrado = null;
         }
       })
       .catch((e) => {
-        console.error(`falha ao consultar cliente. ${e}`);
+        logger.error(`falha ao consultar cliente. ${e}`);
         res.sendStatus(500);
       });
 
-    return;
+    if (!clienteEncontrado) {
+      res.sendStatus(404);
+      return;
+    }
+
+    await cService
+      .buscarTelefoneDoCliente(clienteEncontrado.id_cliente)
+      .then((telefone) => (clienteEncontrado.telefone = telefone))
+      .catch((e) => {
+        logger.error(
+          `falha ao encontrar telefone do cliente [${clienteEncontrado.id_cliente}]`
+        );
+        res.sendStatus(500);
+      });
+    await cService
+      .buscarEnderecoDoCliente(clienteEncontrado.id_cliente)
+      .then((endereco) => (clienteEncontrado.endereco = endereco))
+      .catch((e) => {
+        logger.error(
+          `falha ao encontrar telefone do cliente [${clienteEncontrado.id_cliente}]`
+        );
+        res.sendStatus(500);
+      });
+
+    res.status(200).send(clienteEncontrado);
   });
 
   app.get('/clientes/cpf/:cpf([0-9]{11})', (req, res) => {
     let cpfStr = req.params.cpf;
+    logger.info(`buscar cliente pelo cpf`);
 
     cService
       .buscarPorCpf(cpfStr)
       .then((cliente) => {
         if (cliente !== null) {
-          console.log(`encontrado cliente [${cliente.id_cliente}]`);
+          logger.info(`encontrado cliente [${cliente.id_cliente}]`);
           res.status(200).send(cliente);
         } else {
-          console.log(`nenhum cliente encontrado`);
+          logger.info(`nenhum cliente encontrado`);
           res.status(404).send(null);
         }
       })
       .catch((e) => {
-        console.error(`falha ao consultar cliente. ${e}`);
+        logger.error(`falha ao consultar cliente.`);
+        logger.debug(`erro: ${e}`);
         res.sendStatus(500);
       });
   });
 
   app.post('/clientes', async (req, res) => {
     const b = req.body;
+    logger.info(`cadastrar um novo cliente`);
 
     let dadosCliente = [b.nome, b.cpf, b.instagram, b.email, b.data_nascimento];
     let dadosTelefone = [
@@ -122,7 +149,6 @@ module.exports = function(app, db) {
       b.endereco.numero
     ];
 
-    console.log(dadosCliente);
     try {
       await db.query('BEGIN');
 
@@ -131,7 +157,11 @@ module.exports = function(app, db) {
       try {
         novoCliente = await cService.cadastrarCliente(b);
       } catch (error) {
-        console.error(error);
+        logger.error(`falha ao cadastrar cliente`);
+        logger.debug(`erro: ${error}`);
+
+        await db.query('ROLLBACK');
+        logger.info('ROLLBACK transação');
         res.status(500).send(`falha ao cadastrar cliente`);
         return;
       }
@@ -150,12 +180,14 @@ module.exports = function(app, db) {
       // INSERIR ENDEREÇO
       await db.query(qInsertEndereco, dadosEndereco);
     } catch (ex) {
-      console.log('Falha na transação', ex);
+      logger.error(`falha na transação`);
+      logger.debug(`erro: ${ex}`);
       await db.query('ROLLBACK');
+      logger.info('ROLLBACK transação');
     }
     await db.query('COMMIT');
-    res.status(201);
-    res.send('ok');
+    logger.info('COMMIT transação');
+    res.status(201).send('ok');
   });
 
   app.delete('/clientes/:id', async (req, res) => {
@@ -170,17 +202,17 @@ module.exports = function(app, db) {
         }
         return true;
       })
-      .catch((er) => console.error(er));
+      .catch((er) => logger.error(er));
 
     if (!existe) {
-      console.log('Não existe cliente com esse id');
+      logger.info('Não existe cliente com esse id');
       res.status(200).send('OK');
       return;
     }
 
     await db.query('BEGIN');
-    console.log('transação para exclusão: iniciada');
-    console.log('remover cliente de id', id);
+    logger.info('transação para exclusão: iniciada');
+    logger.info('remover cliente de id', id);
     try {
       await db.query('DELETE FROM dg.tb_telefone where id_cliente = $1', param);
       await db.query('DELETE FROM dg.tb_endereco where id_cliente = $1', param);
@@ -192,7 +224,7 @@ module.exports = function(app, db) {
     }
 
     await db.query('COMMIT');
-    console.log('exclusão realizada com sucesso!');
+    logger.info('exclusão realizada com sucesso!');
 
     res.status(200).send('OK');
     return;
