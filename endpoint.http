@@ -83,4 +83,4 @@ PATCH http://localhost:8081/pedidos/62
 
 GET http://localhost:8081/sabores
 ###
-GET http://localhost:8081/sabores/800
+GET http://localhost:8081/sabores
