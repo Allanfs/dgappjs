@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "start_local": "node -r dotenv/config server.js",
+    "start": "node server.js"
   },
   "author": "",
   "license": "ISC",
@@ -17,6 +19,7 @@
     "winston": "^3.2.1"
   },
   "devDependencies": {
+    "dotenv": "^8.1.0",
     "nodemon": "^1.19.2"
   }
 }

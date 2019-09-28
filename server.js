@@ -1,17 +1,16 @@
 const express = require('express');
 const { Client } = require('pg');
 const cors = require('cors');
-const db = require('./config/db');
 const bodyParser = require('body-parser');
 
 const logger = require('./config/logger');
 /* ----------------------------------------------------------------- */
 
 const app = express();
-const port = 8080;
+const port = process.env.PORT || 8080;
 
 const client = new Client({
-  connectionString: db.url,
+  connectionString: process.env.DB_URL,
   ssl: true
 });
 
