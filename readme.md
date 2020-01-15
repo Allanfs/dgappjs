@@ -1,4 +1,4 @@
-## NodeJs API for a pizzaria store
+## NodeJs API for a Pizzaria Store
 
 ## Pedidos
 
