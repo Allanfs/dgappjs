@@ -14,7 +14,7 @@ module.exports = function(db) {
       try {
         sabores = await db
           .query(
-            `select ts.id_sabor, ts.nome as "nome_sabor", r.id_recheio, r.nome as "nome_recheio", sor.posicao from dg.tb_sabor ts
+            `select ts.id_sabor, ts.especial, ts.salgado, ts.disponivel, ts.nome as "nome_sabor", r.id_recheio, r.nome as "nome_recheio", sor.posicao from dg.tb_sabor ts
           join dg.tb_sabor_ordem_recheio sor on (sor.id_sabor = ts.id_sabor)
           join dg.tb_recheio r on (sor.id_recheio = r.id_recheio) order by ts.id_sabor, sor.posicao`
           )
@@ -28,7 +28,7 @@ module.exports = function(db) {
         sabores = null;
       }
       logger.info(`buscar os recheios dos sabores...`);
-
+      logger.info(sabores[0].especial);
       let saborAnterior;
       let recheios = new Array();
 
@@ -40,6 +40,9 @@ module.exports = function(db) {
             let tmp = {
               id_sabor: saborAnterior.id_sabor,
               nome: saborAnterior.nome_sabor,
+              especial: saborAnterior.especial,
+              salgado: saborAnterior.salgado,
+              disponivel: saborAnterior.disponivel,
               recheios
             };
             saboresRetorno.push(tmp);
